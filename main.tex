@@ -1,0 +1,71 @@
+% \documentclass[12pt]{article}
+% \usepackage{lipsum}
+% \usepackage{open-logic}
+
+% \usepackage{amsfonts}
+% \title{\LaTex\ in Emacs}
+% \author{Mohan Radhakrishnan}
+% \begin{document}
+% \maketitle
+% \lipsum[1]
+% \end{document}
+% %
+% master file to produce a complete release version
+% without references, markup, etc.
+
+\documentclass[book]{memoir}
+
+% we're compiling from main directory
+\newcommand{\olpath}{.}
+
+\usepackage{mathpazo}
+\usepackage{helvet}
+\usepackage{courier}
+\linespread{1.05} % Palatino looks better with this
+
+\usepackage{gitinfo2}
+
+\input{\olpath/open-logic.sty}
+
+
+
+\let\cleardoublepage\clearpage
+
+\pagestyle{plain}
+
+\begin{document}
+
+\begin{titlingpage}
+\begin{raggedleft}
+\HUGE
+\selectfont\bfseries\sffamily
+THE OCaml Tools Development
+\vskip 3ex
+\normalfont\huge
+\vskip 4ex
+\vskip 4ex
+\Large
+Revision\gitRel: \gitAbbrevHash{} (\gitBranch)\\
+
+\end{raggedleft}
+
+\vfill
+
+
+\end{titlingpage}
+\tableofcontents*
+% \chapter{Introduction}
+% \section{section}
+% \subsection{subsection}
+% \subsubsection{subsubsection}
+% \paragraph{paragraph}
+\pagestyle{giheadings}
+
+% \include{content/open-logic-about}
+
+% \tableofcontents*
+
+
+% \bibliography{\olpath/bib/open-logic}
+
+\end{document}
