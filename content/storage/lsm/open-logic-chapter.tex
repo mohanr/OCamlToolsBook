@@ -1,0 +1,21 @@
+\documentclass{memoir}
+
+\usepackage{subfiles}
+
+% Open Logic main path is 3 directories up for chapters; they live in
+% content/*/*
+\newcommand*{\olpath}{./}
+
+\input{\olpath/open-logic.sty}
+
+\def\thechapter{\theolchapter}
+
+\pagestyle{openlogic}
+
+\begin{document}
+
+This file should not be compiled on its own. It is merely a template to
+compile chapters by themselves.
+
+\end{document}
+
