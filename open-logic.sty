@@ -25,8 +25,13 @@
 
 \RequirePackage{tikz}
 \RequirePackage{tikzscale}
-\usetikzlibrary{arrows,automata,intersections,positioning}
+\usetikzlibrary{arrows,automata,intersections,positioning,quotes}
 
+% Normal packages
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{caption}
 \RequirePackage{bussproofs}
 
 % change definition of prooftree environment to align proofs at bottom
@@ -193,17 +198,17 @@
 
 % License boxes
 
-\newcommand*{\ollicense}{%
-\hspace{.3cm}
-\begin{minipage}[b]{3.5cm}
-\ollicensefont
-\textit{\href{https://github.com/OpenLogicProject/OpenLogic}{The Open
-    Logic Text}} by the \href{http://openlogicproject.org/}{Open Logic
-  Project} is licensed under a
-\href{http://creativecommons.org/licenses/by/4.0/}{Creative Commons
-  Attribution 4.0 International License}.
-\end{minipage}
-\hfill
+%% \newcommand*{\ollicense}{%
+%% \hspace{.3cm}
+%% \begin{minipage}[b]{3.5cm}
+%% \ollicensefont
+%% \textit{\href{https://github.com/OpenLogicProject/OpenLogic}{The Open
+%%     Logic Text}} by the \href{http://openlogicproject.org/}{Open Logic
+%%   Project} is licensed under a
+%% \href{http://creativecommons.org/licenses/by/4.0/}{Creative Commons
+%%   Attribution 4.0 International License}.
+%% \end{minipage}
+%% \hfill
 
 % - `\ifgitinfo`: produced Git revision information if `gitinfo` is used
 
@@ -257,8 +262,8 @@
 \setlength{\intextsep}{0pt}
 \setlength{\columnsep}{0pt}
 
-\tagtrue{olphotos} % include photos
-\tagtrue{olphotos-lowres} % pick low-res images for smaller file size
+%% \tagtrue{olphotos} % include photos
+%% \tagtrue{olphotos-lowres} % pick low-res images for smaller file size
 
 % \olphoto[width]{file}{caption} -- include a photo as a figure, if
 % tag olphotos is true. width defaults to \olphotowidth. file is

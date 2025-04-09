@@ -1,0 +1,517 @@
+\documentclass[../../../include/open-logic-chapter]{subfiles}
+
+\begin{document}
+
+\olchapter{distcon}{summary}{Summary}
+
+
+% add commands to create the Tikz font and a degree-symbol
+\newcommand{\grad}{$^\circ$}
+
+%to highlight the latex-code
+\lstset{
+	basicstyle=\small\ttfamily,						% sets the basic style of the code
+	language={[LaTeX]TeX},
+    texcl=true,  % Enables correct recognition of \usepackage commands
+    escapeinside={(*@}{@*)},
+	numbersep=5mm, 									% space between line-number and code
+	numbers=left, 									% line-numbers on the left side
+	numberstyle=\small,								% style of line-numbers
+	breaklines=true,								% allows line-breaks
+	framexleftmargin=8mm,							% border begins 8mm earlier (include line numbers into box)
+	xleftmargin=1.5cm,								% 1.5cm space from the left of text-start
+	aboveskip=0.8cm,								% 0.8cm space above listing
+	belowskip=0.4cm,								% 0.4cm space below listing
+	backgroundcolor=\color{green!7},				% some slight-green background color
+	captionpos=b,									% caption should be below (b) the listing
+	frame=lrtb,										% adds a frame around the code
+	tabsize=4,										% sets default tabsize to 2 spaces
+	escapeinside=??,								% escape sequence inside lstlisting
+	rulecolor=\color{red},							% bordercolor
+	morekeywords={\usetikzlibrary,					% adds more custom keywords
+	\node,
+	\path,
+	\edge},
+	keywordstyle=\color[rgb]{0,0,1},				% style for the keywords
+    commentstyle=\color[rgb]{0.133,0.545,0.133},	% style for the comments
+    stringstyle=\color[rgb]{0.627,0.126,0.941}		% style for the strings
+}
+% Define a style for C++
+\lstdefinestyle{ocamlstyle}{
+	basicstyle=\small\ttfamily,
+	language=C++,
+	numbers=left,
+	numberstyle=\small,
+	breaklines=true,
+	backgroundcolor=\color{gray!10},
+	keywordstyle=\color[rgb]{1,0,0},
+	commentstyle=\color[rgb]{0,0.5,0},
+	stringstyle=\color[rgb]{0,0,1},
+	tabsize=4
+}
+\renewcommand{\lstlistingname}{Code}
+\captionsetup[lstlisting]{font={footnotesize},margin=1.5cm,singlelinecheck=false } % removes "Listing 1: "
+\definecolor{light-light-gray}{gray}{0.95}
+
+%add a 1 to the authors thanks (instead of a *)
+\makeatletter
+\let\@fnsymbol\@arabic
+\makeatother
+
+
+	\maketitle
+	\begin{abstract}
+The Raft consensus Algorithm was desiged by Diego Ongaro and John Ousterhout at Stanford University. Apart from other characteristics
+they argue that it is designed for \textbf{Understandability}.
+
+
+The following primary characteristics are what the Raft authors mention.
+\begin{itemize}
+\item { Consensus is agreement of shared state}
+\item { System is up if majority of servers are up}
+\item { Needed for consistent, fault-tolerant storage systems}
+\end{itemize}
+\end{abstract}\newpage
+	\section{Remote Procedure Calls and State Machine}
+
+		\begin{figure}[ht]
+			\centering
+\begin{tikzpicture}[auto,
+            > = Stealth,
+every edge quotes/.style = {font=\footnotesize}, % if you like to have smaller edge labels
+every edge/.append style = {->, draw=cyan, thick},
+every loop/.append style = {<-, looseness = 12},
+node distance = 32mm,
+ state/.style = {circle, semithick, draw=cyan, text=cyan, minimum size=1.2em},
+      rect/.style = {rectangle, draw=cyan, thick, minimum width=2.5cm, minimum height=1.5cm, align=center}
+]
+\node (A) [state, initial, accepting]   {Follower};
+\node (B) [state, below=of A]           {Leader};
+\node (C) [state, below=of B]           {Candidate};
+\node (A1)  [rect,right=of A,draw,thick,minimum width=2cm,minimum height=2cm] {Passive but expects \\ regular heartbeats};
+\node (B1)  [rect,right=of B,draw,thick,minimum width=2cm,minimum height=2cm] {Issues RequestVote RPCs \\ to get elected as leader};
+\node (C1)  [rect,right=of C,draw,thick,minimum width=2cm,minimum height=2cm] {Issues AppendVote RPCs: \\Replicates its log\\Hearbeats to maintain leadership};
+\path
+        (C) edge [bend left,"Discover higher term"]     (A)
+        (C) edge [bend left,"Discover higher term"]     (B)
+        (A) edge ["Promote"]     (B)
+        (B) edge [ "WIn election"]   (C)
+        (A) edge [ right]   (A1)
+        (B) edge [ right]  (B1)
+        (C) edge [ right]  (C1);
+    \end{tikzpicture}
+	\caption{A machine, accepting the language $L$ with $L=\{0,1\}^*\cdot \{101\}\cdot \{0,1\}^*$.}
+		\end{figure}
+
+\section{Leader Election}
+
+			\begin{figure}[ht]
+			\centering
+\begin{tikzpicture}[auto,
+            > = Stealth,
+every edge quotes/.style = {font=\footnotesize}, % if you like to have smaller edge labels
+every edge/.append style = {->, draw=cyan, thick},
+every loop/.append style = {<-, looseness = 12},
+node distance = 12mm,
+ state/.style = {circle, semithick, draw=cyan, text=cyan, minimum size=1.2em},
+      rect/.style = {rectangle, draw=cyan, thick, minimum width=2.5cm, minimum height=1.5cm, align=center}
+]
+\node (A) [state, initial,initial text=Start up or recovers from crash, accepting,align=center]   {Become \\Candidate};
+\node (B) [state, below=of A,align=center]           {CurrentTerm++, \\Vote for self};
+\node (C) [state, below=of B,align=center]           {Send RequestVote\\ RPCs};
+\node (D) [state, below=of C,align=center]           {Become Leader,\\ Sent heartbeats};
+\node (E) [state, below=of D,align=center]           {Become\\ follower};
+\path
+        (C) edge [bend left=60,"Discover higher term"]     (A)
+        (C) edge [bend left=40,"Timeout"]     (B)
+        (C) edge [bend right=40,"Votes from majority"]     (D)
+        (C) edge [bend left=40, "RPC from leader"]   (E)
+    \end{tikzpicture}
+	\caption{John Outershout's presentation $L$ with $L=\{0,1\}^*\cdot \{101\}\cdot \{0,1\}^*$.}
+	\end{figure}
+
+			\begin{figure}[ht]
+			\centering
+\begin{tikzpicture}[auto,
+            > = Stealth,
+every edge quotes/.style = {font=\footnotesize}, % if you like to have smaller edge labels
+every edge/.append style = {->, draw=cyan, thick},
+every loop/.append style = {<-, looseness = 12},
+node distance = 12mm,
+ state/.style = {circle, semithick, draw=cyan, text=cyan, minimum size=1.2em},
+      rect/.style = {rectangle, draw=cyan, thick, minimum width=2.5cm, minimum height=1.5cm, align=center},
+          double state/.style = {circle, semithick, draw=orange, double, double distance=2pt, text=cyan, minimum size=1.2em}
+        ]
+
+\def\radius{3}
+
+% Define nodes in a circular layout
+\node[double state] (N1) at ({1*360/5}:\radius) {Node 1}; % Double circle for Node 1
+\node[double state] (N2) at ({2*360/5}:\radius) {Node 2}; % Double circle for Node 2
+\node[double state] (N3) at ({3*360/5}:\radius) {Node 3}; % Double circle for Node 3
+\node[state] (N4) at ({4*360/5}:\radius) {Node 4}; % Normal node
+\node[state] (N5) at ({5*360/5}:\radius) {Node 5}; % Normal node
+
+\path (N5) edge[bend right=20] (N1);
+\path (N1) edge[bend right=20] (N2);
+\path (N2) edge[bend right=20] (N3);
+\path (N3) edge[bend right=20] (N4);
+\path (N4) edge[bend right=20] (N5);
+\newcommand\DrawControl[3]{
+  node[#2,circle,fill=#2,inner sep=2pt,label={above:$#1$},label={[black]below:{\footnotesize#3}}] at #1 {}
+}
+    \end{tikzpicture}
+	\caption{John Outershout's presentation $L$ with $L=\{0,1\}^*\cdot \{101\}\cdot \{0,1\}^*$.}
+		\end{figure}
+
+\section{The Term}
+	\subsection{Create an environment}
+		A term is a value that is sent with every RPC and received in every response. It is used to identify obsolete information \textit{(e.g)} If a peer has a later term, the term is updated and the status is reverted to \textit{Follower}.
+		Every server maintains its own term and so there is no-\textit{Global view}.
+
+		To draw graphs, uses \texttt{node}s and \texttt{path}s. Nodes are the states/boxes/circles of a graph, while the path describes one or more line between them.
+
+		To getting stared with drawing in , we must create an environment:\\
+		%% \begin{minipage}{\linewidth}
+
+			\begin{lstlisting}[caption={Create a simple enviroment.}]
+\begin{tikzpicture}
+...
+\end{tikzpicture}
+			\end{lstlisting}
+		%% \end{minipage}
+
+	\subsection{Parameter of an environment}
+		For this environment, there are different parameter, we can choose from. For instance:\\
+		%% \begin{minipage}{\linewidth}
+
+			\begin{lstlisting}[style=ocamlstyle,caption={A example with parameter in a environment.}]
+  let get_state = function
+    | `Leader -> "leader."
+    | `Follower -> "follower."
+    | `Candidate -> "candidate."
+    | `Dead -> " dead."
+			\end{lstlisting}
+
+		%% \end{minipage}
+
+		Here's a short explanation of these parameter:\\
+		\begin{itemize}
+			\item \texttt{RequestVote} : Solicits votes from other members of the cluster
+			\item \texttt{AppendEntries} : Replicates the log and can\\
+also server as a heartbeat
+		\end{itemize}
+		More detailed information on the different parameter now.
+	\subsection{Basic and miscellaneous parameter}
+		Here just a few basic parameter.
+		\begin{itemize}
+			\item \texttt{-} : All connections are normal lines
+			\item \texttt{->} : All connections are arrows
+			\item \texttt{>= <Option>} : Specifies the type of the arrow head
+			\item \texttt{shorten >= x} : Distance arrow head -- Node (e.g. 5pt, 1cm, ...)
+		\end{itemize}
+	\subsection{Color of graphs}
+		You can change the color of the graph with the paremeter. To do that, just use the \texttt{color=<color>} option.\\
+		%% \begin{minipage}{\linewidth}
+
+			\begin{lstlisting}[caption={Choosing a slight red color (60\% red, 40\% white/background)}]
+\begin{tikzpicture}[->,
+	thin,
+	color=red!60]
+...
+\end{tikzpicture}
+			\end{lstlisting}
+		%% \end{minipage}
+
+	\section{Arrows and lines}
+	\subsection{Thickness of lines and arrows}
+		There're different thickness options available for arrows and lines (top: very thin, bottom: thickest):
+		\begin{itemize}
+			\item \texttt{\textbackslash ultra thin}
+			\item \texttt{\textbackslash very thin}
+			\item \texttt{\textbackslash thin}
+			\item \texttt{\textbackslash semithick}
+			\item \texttt{\textbackslash thick}
+			\item \texttt{\textbackslash very thick}
+			\item \texttt{\textbackslash ultra thick}
+		\end{itemize}
+	\subsection{Arrow heads}
+		To use arrows properly, add the  library \texttt{arrows} to your collection:\\
+		%% \begin{minipage}{\linewidth}
+
+			\begin{lstlisting}[caption={The library \texttt{arrows} is used to draw arrows.}]
+\usetikzlibrary{arrows}
+			\end{lstlisting}
+		%% \end{minipage}
+
+		There're many different - party strange - types of arrows.
+		The type of an arrow can also be specified at the beginning of an option.\\
+		%% \begin{minipage}{\linewidth}
+
+			\begin{lstlisting}[caption={Specification of an arrow type.}]
+\begin{tikzpicture}[->,
+	>=<arrow-type>]
+...
+\end{tikzpicture}
+			\end{lstlisting}
+		%% \end{minipage}
+
+		Here's a small - for state-machines interesting - selection of different arrow types:
+		\begin{itemize}
+			\item no value : \tikz\draw[->,semithick] (0,0) -- (1,0) node [pos=0.2, right] {};
+			\item \texttt{latex} : \tikz\draw[->,>=latex,semithick] (0,0) -- (1,0) node [pos=0.2, right] {};
+			\item \texttt{latex'} : \tikz\draw[->,>=latex',semithick] (0,0) -- (1,0) node [pos=0.2, right] {};
+			\item \texttt{stealth} : \tikz\draw[->,>=stealth,semithick] (0,0) -- (1,0) node [pos=0.2, right] {};
+			\item \texttt{stealth'} : \tikz\draw[->,>=stealth',semithick] (0,0) -- (1,0) node [pos=0.2, right] {};
+			\item \texttt{triangle <angle>} und \texttt{open triangle <angle>} : \\
+				\hspace*{10pt} With 45\grad : \tikz\draw[->,>=triangle 45,semithick] (0,0) -- (1,0) node [pos=0.2, right] {}; \tikz\draw[->,>=open triangle 45,semithick] (2,0) -- (3,0) node [pos=0.2, right] {};\\
+				\hspace*{10pt} With 60\grad : \tikz\draw[->,>=triangle 60,semithick] (0,0) -- (1,0) node [pos=0.2, right] {}; \tikz\draw[->,>=open triangle 60,semithick] (2,0) -- (3,0) node [pos=0.2, right] {};\\
+				\hspace*{10pt} With 90\grad : \tikz\draw[->,>=triangle 90,semithick] (0,0) -- (1,0) node [pos=0.2, right] {}; \tikz\draw[->,>=open triangle 90,semithick] (2,0) -- (3,0) node [pos=0.2, right] {};
+			\item \texttt{angle <angle>} \\
+				\hspace*{10pt} With 45\grad : \tikz\draw[->,>=angle 45,semithick] (0,0) -- (1,0) node [pos=0.2, right] {};\\
+				\hspace*{10pt} With 60\grad : \tikz\draw[->,>=angle 60,semithick] (0,0) -- (1,0) node [pos=0.2, right] {};\\
+				\hspace*{10pt} With 90\grad : \tikz\draw[->,>=angle 90,semithick] (0,0) -- (1,0) node [pos=0.2, right] {};
+		\end{itemize}
+		The option \texttt{'} with the \texttt{latex'} creates a hyperbolic sharpened triangle as the arrow head. \texttt{stealth'} makes the edges more round than sharp.
+
+		Furthermore can the option \texttt{->>} be used to create a double arrow with two heads (e.g. with the \texttt{stealth'} option: \tikz\draw[->>,>=stealth',semithick] (0,0) -- (1,0) node [pos=0.2, right] {}; ). This is possible with all kinds of arrows.
+	\section{Nodes}
+		Nodes are used to create states for our state-machine(s). Thanks to the library \texttt{automata} there are lots of different predefined options. To use these options, just integrate the library \texttt{automata}\\
+
+		To position the created node very quickly and easily, you should use the library \texttt{positioning}:\\
+		%% \begin{minipage}{\linewidth}
+
+			\begin{lstlisting}[caption={Using the library \texttt{automata} and \texttt{positioning}}]
+
+
+\usetikzlibrary{automata}
+\usetikzlibrary{positioning}
+			\end{lstlisting}
+		%% \end{minipage}
+
+	\subsection{Create nodes}
+		Now we can create the first nodes with \texttt{\textbackslash node}. Wherein it should be noted that there's a specific syntax:\\
+		%% \begin{minipage}{\linewidth}
+
+			\begin{lstlisting}[caption={Syntax of the \texttt{\textbackslash node} command.}]
+
+\node[<optionen>] (name) [<optional: position>] {text};
+			\end{lstlisting}
+		%% \end{minipage}\\
+
+		When no position is specified, the node will be placed at the origin (normally at the very left side). The parameter for the positioning will be discussed later.
+
+		Important to be mentioned is the opportunity to write the displayed text of a node in math-mode, which allows indices like $z_0$ or something.
+		\subsubsection{Example machine without connections}
+		A state-machine with the three states $z_0$, $z_1$ and $z_2$ can be look like this:\\
+		%% \begin{minipage}{\linewidth}
+
+			\begin{lstlisting}[mathescape,caption={Drawing of a very simple machine.}]
+\begin{tikzpicture}[->,
+	>=stealth',
+	semithick]
+
+	\node[state,initial]	(0)              {$z_0$};
+	\node[state]			(1) [right of=0] {$z_1$};
+	\node[state,accepting]	(2) [right of=1] {$z_2$};
+\end{tikzpicture}
+			\end{lstlisting}
+		%% \end{minipage}
+
+		Ans here's the result:\\\\
+		\begin{figure}[ht]
+			\centering
+			\begin{tikzpicture}[->,
+				>=stealth',
+				semithick]
+
+				\node[state,initial]	(0)              {$z_0$};
+				\node[state]			(1) [right of=0] {$z_1$};
+				\node[state,accepting]	(2) [right of=1] {$z_2$};
+			\end{tikzpicture}
+			\caption{A simple machine with three states.}
+		\end{figure}\\\\
+		You can passing over parameters to the \texttt{\textbackslash node} command from the \texttt{automata} library as well.
+	\subsection{Options for states}
+		Here's a list of some useful options for states (\texttt{\textbackslash node}s):\\
+		\begin{itemize}
+			\item \texttt{state} : Has to be specified to create a state
+			\item \texttt{initial} : Specifies a start-state\\
+				\hspace*{10pt} Creates an arrow with \textit{start}-Label
+			\item \texttt{accepting} : Indicates the final state of the machine\\
+				\hspace*{10pt} Draws a double circle around the state
+			\item \texttt{with output} : Creates a state with output\\
+				\hspace*{10pt} More information \href{mailto:mail@hauke-stieler.de}{if desired}
+		\end{itemize}
+	\subsection{Positioning of the states}
+		The position of the states can easily be specified by using the \texttt{positioning} library.
+		\subsubsection{Options for positioning}
+		For the positioning are - amongst others - the following options available. These options can also be combined:\\
+		\begin{itemize}
+			\item \texttt{right, left, above, below} : Next to the node (in given direction)
+			\item \texttt{of = <Node>} : Specifies the node use mean by using \texttt{right, left, ...}
+			\item \texttt{and} : When you want to use several distances, use \texttt{and}\\
+			Ex.: \texttt{[...=2cm \underline{and} 1cm of A]}
+		\end{itemize}
+		\subsubsection{Automatic distance}
+		It should be considered that there's a specific syntax for the \textbf{automatic distance} of nodes.\\
+		%% \begin{minipage}{\linewidth}
+
+			\begin{lstlisting}[caption={Syntax for the positioning of nodes.}]
+[<position> of = <reference-node>]
+			\end{lstlisting}
+		%% \end{minipage}\\
+
+		The value of the automatic distance can be defined by using \texttt{node distance=...} with the normal \LaTeX units (\texttt{cm, em, pt, ...}).
+		So for example:\\
+		%% \begin{minipage}{\linewidth}
+
+			\begin{lstlisting}[mathescape,caption={Automatic positioning of a node to the right of A.}]
+[right of = A]
+			\end{lstlisting}
+		%% \end{minipage}\\
+
+		This placed a node to the right of a node A, while the distance defined by \texttt{node distance=...} is used.
+		\subsubsection{Manual distance}
+		To use a \textbf{manual distance}, which can be specified by using the well known \LaTeX units \texttt{cm, em, pt, ...}, you have to consider the syntax:\\
+		%% \begin{minipage}{\linewidth}
+
+			\begin{lstlisting}[caption={Syntax for the manual positioning of nodes.}]
+[<position> = <distance> of <reference-node>]
+			\end{lstlisting}
+		%% \end{minipage}\\
+
+		For example:\\
+		%% \begin{minipage}{\linewidth}
+
+			\begin{lstlisting}[mathescape,caption={Manual positioning of a node right of A}]
+[right = 2cm of A]
+			\end{lstlisting}
+		%% \end{minipage}\\
+
+		This placed the one node 2cm to the right of node A.
+		\subsubsection{Example for the positioning of nodes}
+		Given are three nodes: $a$, $b$ and $c$.
+		\begin{itemize}
+			\item Node $b$ should be placed right and above (2cm right, 1cm above) the Node $a$
+			\item Node $c$ should be placed automatically right and below of node $a$
+		\end{itemize}
+		Therefore you can skillfully combine the options:\\
+		%% \begin{minipage}{\linewidth}
+
+			\begin{lstlisting}[mathescape,caption={Combination of options for the positioning.}]
+\begin{tikzpicture}[->,
+	>=stealth',
+	semithick,
+	node distance=2cm]
+
+\node [state] (a)                                {$a$};
+\node [state] (b) [above right=1cm and 2cm of a] {$b$};
+\node [state] (c) [below right of = a]           {$c$};
+
+\end{tikzpicture}
+			\end{lstlisting}
+		%% \end{minipage}\\
+
+		If you choose a nice value for the distance (e.g. \texttt{node distance=2cm}), it can look pretty fancy:\\\\
+		\begin{figure}[ht]
+			\centering
+			\begin{tikzpicture}[->,
+				>=stealth',
+				semithick,
+				node distance=2cm]
+
+				\node [state] (a)                                {$a$};
+				\node [state] (b) [above right=1cm and 2cm of a] {$b$};
+				\node [state] (c) [below right of = a]           {$c$};
+			\end{tikzpicture}
+			\caption{Three different placed nodes.}
+		\end{figure}\\\\
+	\section{Nodes verbinden}
+	To not only have a bunch of states but a real state-machine, you have to connect these states. There's a command called \texttt{\textbackslash path} to create those connections.
+	\subsection{Create arrows}
+		\texttt{\textbackslash path} has a syntax as well:\\
+		%% \begin{minipage}{\linewidth}
+
+			\begin{lstlisting}[mathescape,caption={Syntax of the \texttt{\textbackslash path} command.}]
+\path (<from-node>) edge [<options>] node {text} (<to-node>);
+			\end{lstlisting}
+		%% \end{minipage}\\
+
+		Important to be noted is that you need to write \texttt{\textbackslash path} just once (see example below).\\
+		What kind of options exist, is coming soon, but at first we'll see an example of this:\\
+		%% \begin{minipage}{\linewidth}
+
+			\begin{lstlisting}[mathescape,caption={The well known machine from before, but this time with some connections.}]
+\begin{tikzpicture}[->,
+	>=stealth',
+	semithick,
+	node distance=2cm]
+
+\node [state,initial] (a)                        {$a$};
+\node [state] (b) [above right=1cm and 2cm of a] {$b$};
+\node [state,accepting] (c) [below right of = a] {$c$};
+
+\path (a) edge node {0} (b)
+          edge node {1} (c)
+      (c) edge node {2} (b);
+
+\end{tikzpicture}
+			\end{lstlisting}
+		%% \end{minipage}\\
+
+		And here's the belonging machine\\
+		\begin{figure}[ht]
+			\centering
+			\begin{tikzpicture}[->,
+				>=stealth',
+				semithick,
+				node distance=2cm]
+
+				\node [state,initial] (a)                        {$a$};
+				\node [state] (b) [above right=1cm and 2cm of a] {$b$};
+				\node [state,accepting] (c) [below right of = a] {$c$};
+
+				\path (a) edge node {0} (b)
+				          edge node {1} (c)
+				      (c) edge node {2} (b);
+
+			\end{tikzpicture}
+			\caption{Three states with come connections (\textbf{without} options.}
+		\end{figure}
+	\subsection{Options for the \texttt{\textbackslash path} command}
+		You can choose on different options as well:
+		\begin{itemize}
+			\item \texttt{right, left, above, below} : Specifies the position of the text
+			\item \texttt{bend <right, left>} : Creates a bended edge. The direction of the bending is specified from the perspective of the arrow
+			\item \texttt{bend <right, left> = <angle>} : The \texttt{angle} describes the strength of the bending
+			\item \texttt{loop <right, left, above, below>} : Creates a loop above, below, left or right of the state
+		\end{itemize}
+	\section{Examples}
+		Because the most important aspects as been discussed, you'll find a few examples down here.
+	\subsection{Example 1}
+
+		\begin{figure}[ht]
+			\centering
+			\begin{tikzpicture}[->,>=stealth',
+				shorten >=5pt,
+				node distance=4.5cm,
+				semithick]
+
+				\node[initial,state]   (R)              {Follower};
+				\node[state]           (S) [right of=R] {Candidate};
+				\node[state,accepting]           (T) [right of=S] {Leader};
+
+				\path 	(R)
+				            edge [bend left=50,,above]            node {timeout,start election} (S)
+						(S) edge [bend left=60,below]            node {discover curent leader or higher term} (R)
+						(S) edge [loop above]            node {timeout, new election} (S)
+						(S) edge [bend left,above]            node {receive votes from majority of servers} (T)
+
+						(T) edge [bend left=20,below]  node {discover server with higher term} (R)
+			            ;
+			\end{tikzpicture}\\
+			\caption{A machine, accepting the language $L$ with $L=\{0,1\}^*\cdot \{101\}\cdot \{0,1\}^*$.}
+		\end{figure}
+	\subsection{Example 2}
+		%% \end{minipage}\\

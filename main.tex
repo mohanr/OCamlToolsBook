@@ -1,4 +1,4 @@
-\documentclass{open-logic-book}{memoir}
+\documentclass{open-logic-book}
 % we're compiling from main directory
 %
 \newcommand{\olpath}{.}
@@ -16,13 +16,20 @@
 \begin{raggedleft}
 \HUGE
 \selectfont\bfseries\sffamily
-THE OCaml Tools Development
+OCaml in Practice : Building Functional systems
 \vskip 3ex
 \normalfont\huge
 \vskip 4ex
 \vskip 4ex
 \Large
-Revision\gitRel: \gitAbbrevHash{} (\gitBranch)\\
+\normalfont\huge
+Mohan Radhakrishnan\footnote{contact also via my ID \texttt{radhakrishnan.mohan@gmail.com}.}
+\\
+\vspace{1ex}
+\Large\textit{Programmer}\\
+\vspace{2ex}
+\large\today\\
+\small ver.: 0.1 \\
 \end{raggedleft}
 \vfill
 \end{titlingpage}
@@ -30,4 +37,12 @@ Revision\gitRel: \gitAbbrevHash{} (\gitBranch)\\
 \olimport[content]{content}
 % \include{content/open-logic-about}
 % \bibliography{\olpath/bib/open-logic}
+%%  \makeatletter
+%% \@ifclassloaded{memoir}{\typeout{MEMOIR IS LOADED}}{\typeout{MEMOIR IS NOT LOADED}}
+%% \makeatother
+%% \makeatletter
+%% \@ifundefined{excludeenv}{\typeout{excludeenv is NOT defined!}}{\typeout{excludeenv is defined!}}
+%% \makeatother
+
+
 \end{document}
