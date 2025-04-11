@@ -1,0 +1,210 @@
+\documentclass[../../../include/open-logic-chapter]{subfiles}
+
+\begin{document}
+
+\olchapter{distributed-consensus}{raft}{RAFT Distributed consensus protocol}
+
+
+% add commands to create the Tikz font and a degree-symbol
+\newcommand{\grad}{$^\circ$}
+
+%to highlight the latex-code
+\lstset{
+	basicstyle=\small\ttfamily,						% sets the basic style of the code
+	language={[LaTeX]TeX},
+    texcl=true,  % Enables correct recognition of \usepackage commands
+    escapeinside={(*@}{@*)},
+	numbersep=5mm, 									% space between line-number and code
+	numbers=left, 									% line-numbers on the left side
+	numberstyle=\small,								% style of line-numbers
+	breaklines=true,								% allows line-breaks
+	framexleftmargin=8mm,							% border begins 8mm earlier (include line numbers into box)
+	xleftmargin=1.5cm,								% 1.5cm space from the left of text-start
+	aboveskip=0.8cm,								% 0.8cm space above listing
+	belowskip=0.4cm,								% 0.4cm space below listing
+	backgroundcolor=\color{green!7},				% some slight-green background color
+	captionpos=b,									% caption should be below (b) the listing
+	frame=lrtb,										% adds a frame around the code
+	tabsize=4,										% sets default tabsize to 2 spaces
+	escapeinside=??,								% escape sequence inside lstlisting
+	rulecolor=\color{red},							% bordercolor
+	morekeywords={\usetikzlibrary,					% adds more custom keywords
+	\node,
+	\path,
+	\edge},
+	keywordstyle=\color[rgb]{0,0,1},				% style for the keywords
+    commentstyle=\color[rgb]{0.133,0.545,0.133},	% style for the comments
+    stringstyle=\color[rgb]{0.627,0.126,0.941}		% style for the strings
+}
+% Define a style for C++
+\lstdefinestyle{ocamlstyle}{
+	basicstyle=\small\ttfamily,
+	language=C++,
+	numbers=left,
+	numberstyle=\small,
+	breaklines=true,
+	backgroundcolor=\color{gray!10},
+	keywordstyle=\color[rgb]{1,0,0},
+	commentstyle=\color[rgb]{0,0.5,0},
+	stringstyle=\color[rgb]{0,0,1},
+	tabsize=4
+}
+\renewcommand{\lstlistingname}{Code}
+\captionsetup[lstlisting]{font={footnotesize},margin=1.5cm,singlelinecheck=false } % removes "Listing 1: "
+\definecolor{light-light-gray}{gray}{0.95}
+
+%add a 1 to the authors thanks (instead of a *)
+\makeatletter
+\let\@fnsymbol\@arabic
+\makeatother
+
+
+	\begin{abstract}
+The Raft consensus Algorithm was desiged by Diego Ongaro and John Ousterhout at Stanford University. Apart from other characteristics
+they argue that it is designed for \textbf{Understandability}.
+
+
+The following primary characteristics are what the Raft authors mention.
+\begin{itemize}
+\item { Consensus is agreement of shared state}
+\item { System is up if majority of servers are up}
+\item { Needed for consistent, fault-tolerant storage systems}
+\end{itemize}
+\end{abstract}\newpage
+	\section{Remote Procedure Calls and State Machine}
+
+		\begin{figure}[ht]
+			\centering
+\begin{tikzpicture}[auto,
+            > = Stealth,
+every edge quotes/.style = {font=\footnotesize}, % if you like to have smaller edge labels
+every edge/.append style = {->, draw=cyan, thick},
+every loop/.append style = {<-, looseness = 12},
+node distance = 32mm,
+ state/.style = {circle, semithick, draw=cyan, text=cyan, minimum size=1.2em},
+      rect/.style = {rectangle, draw=cyan, thick, minimum width=2.5cm, minimum height=1.5cm, align=center}
+]
+\node (A) [state, initial, accepting]   {Follower};
+\node (B) [state, below=of A]           {Leader};
+\node (C) [state, below=of B]           {Candidate};
+\node (A1)  [rect,right=of A,draw,thick,minimum width=2cm,minimum height=2cm] {Passive but expects \\ regular heartbeats};
+\node (B1)  [rect,right=of B,draw,thick,minimum width=2cm,minimum height=2cm] {Issues RequestVote RPCs \\ to get elected as leader};
+\node (C1)  [rect,right=of C,draw,thick,minimum width=2cm,minimum height=2cm] {Issues AppendVote RPCs: \\Replicates its log\\Hearbeats to maintain leadership};
+\path
+        (C) edge [bend left,"Discover higher term"]     (A)
+        (C) edge [bend left,"Discover higher term"]     (B)
+        (A) edge ["Promote"]     (B)
+        (B) edge [ "WIn election"]   (C)
+        (A) edge [ right]   (A1)
+        (B) edge [ right]  (B1)
+        (C) edge [ right]  (C1);
+    \end{tikzpicture}
+	\caption{}
+		\end{figure}
+
+\section{Leader Election}
+
+			\begin{figure}[ht]
+			\centering
+\begin{tikzpicture}[auto,
+            > = Stealth,
+every edge quotes/.style = {font=\footnotesize}, % if you like to have smaller edge labels
+every edge/.append style = {->, draw=cyan, thick},
+every loop/.append style = {<-, looseness = 12},
+node distance = 12mm,
+ state/.style = {circle, semithick, draw=cyan, text=cyan, minimum size=1.2em},
+      rect/.style = {rectangle, draw=cyan, thick, minimum width=2.5cm, minimum height=1.5cm, align=center}
+]
+\node (A) [state, initial,initial text=Start up or recovers from crash, accepting,align=center]   {Become \\Candidate};
+\node (B) [state, below=of A,align=center]           {CurrentTerm++, \\Vote for self};
+\node (C) [state, below=of B,align=center]           {Send RequestVote\\ RPCs};
+\node (D) [state, below=of C,align=center]           {Become Leader,\\ Sent heartbeats};
+\node (E) [state, below=of D,align=center]           {Become\\ follower};
+\path
+        (C) edge [bend left=60,"Discover higher term"]     (A)
+        (C) edge [bend left=40,"Timeout"]     (B)
+        (C) edge [bend right=40,"Votes from majority"]     (D)
+        (C) edge [bend left=40, "RPC from leader"]   (E)
+    \end{tikzpicture}
+	\caption{John Outershout's presentation.}
+	\end{figure}
+
+			\begin{figure}[ht]
+			\centering
+\begin{tikzpicture}[auto,
+            > = Stealth,
+every edge quotes/.style = {font=\footnotesize}, % if you like to have smaller edge labels
+every edge/.append style = {->, draw=cyan, thick},
+every loop/.append style = {<-, looseness = 12},
+node distance = 12mm,
+ state/.style = {circle, semithick, draw=cyan, text=cyan, minimum size=1.2em},
+      rect/.style = {rectangle, draw=cyan, thick, minimum width=2.5cm, minimum height=1.5cm, align=center},
+          double state/.style = {circle, semithick, draw=orange, double, double distance=2pt, text=cyan, minimum size=1.2em}
+        ]
+
+\def\radius{3}
+
+% Define nodes in a circular layout
+\node[double state] (N1) at ({1*360/5}:\radius) {Node 1}; % Double circle for Node 1
+\node[double state] (N2) at ({2*360/5}:\radius) {Node 2}; % Double circle for Node 2
+\node[double state] (N3) at ({3*360/5}:\radius) {Node 3}; % Double circle for Node 3
+\node[state] (N4) at ({4*360/5}:\radius) {Node 4}; % Normal node
+\node[state] (N5) at ({5*360/5}:\radius) {Node 5}; % Normal node
+
+\path (N5) edge[bend right=20] (N1);
+\path (N1) edge[bend right=20] (N2);
+\path (N2) edge[bend right=20] (N3);
+\path (N3) edge[bend right=20] (N4);
+\path (N4) edge[bend right=20] (N5);
+\newcommand\DrawControl[3]{
+  node[#2,circle,fill=#2,inner sep=2pt,label={above:$#1$},label={[black]below:{\footnotesize#3}}] at #1 {}
+}
+    \end{tikzpicture}
+	\caption{John Outershout's presentation}
+		\end{figure}
+
+\section{The Term}
+		A term is a value that is sent with every RPC and received in every response. It is used to identify obsolete information \textit{(e.g)} If a peer has a later term, the term is updated and the status is reverted to \textit{Follower}.
+		Every server maintains its own term and so there is no-\textit{Global view}.
+
+
+			\begin{lstlisting}[style=ocamlstyle,caption={A example with parameter in a environment.}]
+  let get_state = function
+    | `Leader -> "leader."
+    | `Follower -> "follower."
+    | `Candidate -> "candidate."
+    | `Dead -> " dead."
+			\end{lstlisting}
+
+		%% \end{minipage}
+
+		\begin{itemize}
+			\item \texttt{RequestVote} : Solicits votes from other members of the cluster
+			\item \texttt{AppendEntries} : Replicates the log and can\\
+also server as a heartbeat
+		\end{itemize}
+		\begin{figure}[ht]
+			\centering
+			\begin{tikzpicture}[->,>=stealth',
+				shorten >=5pt,
+				node distance=4.5cm,
+				semithick]
+
+				\node[initial,state]   (R)              {Follower};
+				\node[state]           (S) [right of=R] {Candidate};
+				\node[state,accepting]           (T) [right of=S] {Leader};
+
+				\path 	(R)
+				            edge [bend left=50,,above]            node {timeout,start election} (S)
+						(S) edge [bend left=60,below]            node {discover curent leader or higher term} (R)
+						(S) edge [loop above]            node {timeout, new election} (S)
+						(S) edge [bend left,above]            node {receive votes from majority of servers} (T)
+
+						(T) edge [bend left=20,below]  node {discover server with higher term} (R)
+			            ;
+			\end{tikzpicture}\\
+			\caption{}
+		\end{figure}
+		%% \end{minipage}\\
+
+\OLEndChapterHook
