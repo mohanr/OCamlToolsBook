@@ -2,6 +2,48 @@
 
 
 \begin{document}
+\definecolor{codegreen}{rgb}{0,0.6,0}      % Comments
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}        % Line numbers
+\definecolor{codepurple}{rgb}{0.58,0,0.82}     % Strings and Constructors
+\definecolor{codeblue}{rgb}{0,0,0.8}         % Keywords
+\definecolor{backcolour}{rgb}{0.98,0.98,0.98} % Background
+
+% Define the "OCamlProf" style
+\lstdefinestyle{ocamlstyle}{
+    language=ocaml,                     % Set the language
+    backgroundcolor=\color{backcolour}, % Background color
+    commentstyle=\color{codegreen}\itshape, % Comment style (italic green)
+    keywordstyle=\color{codeblue}\bfseries, % Keyword style (bold blue)
+    numberstyle=\tiny\color{codegray},   % Line number style (tiny gray)
+    stringstyle=\color{codepurple},      % String style (purple)
+    basicstyle=\ttfamily\footnotesize,   % Basic code font (small typewriter)
+    breakatwhitespace=false,            % Don't automatically break lines only at whitespace
+    breaklines=true,                    % Enable automatic line breaking
+    captionpos=b,                       % Caption position below the listing
+    keepspaces=true,                    % Preserve spaces
+    numbers=left,                       % Line numbers on the left
+    numbersep=5pt,                      % Space between line numbers and code
+    showspaces=false,                   % Don't show spaces as symbols
+    showstringspaces=false,             % Don't show spaces in strings as symbols
+    showtabs=false,                     % Don't show tabs as symbols
+    tabsize=2,                          % Tab width = 2 spaces
+    frame=single,                       % Adds a frame around the code
+    rulecolor=\color{black!30},         % Color of the frame
+    % Style for OCaml specific elements (e.g., Constructors like Some, None, ::)
+    emph=[1]{type,let,in,rec,and,match,with,fun,function,if,then,else,module,sig,struct,end,open,include,val,exception,try,raise,of,as}, % Keywords get keywordstyle
+    emphstyle=[1]{\color{codeblue}\bfseries},
+    emph=[2]{int,float,bool,string,char,unit,list,array,option,true,false,Some,None,ref,exception}, % Basic types and common constructors/values
+    emphstyle=[2]{\color{codepurple}}, % Style for these elements (purple)
+    literate={->}{{$\rightarrow$}}1 {<-}{{$\leftarrow$}}1 {::}{{$\colon\colon$}}1 % Render arrows and cons nicely
+             {'a}{{$\alpha$}}1 {'b}{{$\beta$}}1 {'c}{{$\gamma$}}1 % Common type variables
+             {=>}{{$\Rightarrow$}}1 % Fat arrow
+             {<>}{{$\neq$}}1        % Not equal
+             {<=}{{$\leq$}}1        % Less than or equal
+             {>=}{{$\geq$}}1,       % Greater than or equal
+    morestring=[s]{"}{"},            % Standard strings
+    morecomment=[s]{(*}{*)},         % Standard comments
+}
+
 
 \olpart{distcon}{Part 3 : Distributed Consensus}
 \olimport[raft]{raft}

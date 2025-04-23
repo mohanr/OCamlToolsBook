@@ -7,48 +7,20 @@
 
 % add commands to create the Tikz font and a degree-symbol
 \newcommand{\grad}{$^\circ$}
-
-%to highlight the latex-code
-\lstset{
-	basicstyle=\small\ttfamily,						% sets the basic style of the code
-	language={[LaTeX]TeX},
-    texcl=true,  % Enables correct recognition of \usepackage commands
-    escapeinside={(*@}{@*)},
-	numbersep=5mm, 									% space between line-number and code
-	numbers=left, 									% line-numbers on the left side
-	numberstyle=\small,								% style of line-numbers
-	breaklines=true,								% allows line-breaks
-	framexleftmargin=8mm,							% border begins 8mm earlier (include line numbers into box)
-	xleftmargin=1.5cm,								% 1.5cm space from the left of text-start
-	aboveskip=0.8cm,								% 0.8cm space above listing
-	belowskip=0.4cm,								% 0.4cm space below listing
-	backgroundcolor=\color{green!7},				% some slight-green background color
-	captionpos=b,									% caption should be below (b) the listing
-	frame=lrtb,										% adds a frame around the code
-	tabsize=4,										% sets default tabsize to 2 spaces
-	escapeinside=??,								% escape sequence inside lstlisting
-	rulecolor=\color{red},							% bordercolor
-	morekeywords={\usetikzlibrary,					% adds more custom keywords
-	\node,
-	\path,
-	\edge},
-	keywordstyle=\color[rgb]{0,0,1},				% style for the keywords
-    commentstyle=\color[rgb]{0.133,0.545,0.133},	% style for the comments
-    stringstyle=\color[rgb]{0.627,0.126,0.941}		% style for the strings
-}
 % Define a style for C++
-\lstdefinestyle{ocamlstyle}{
-	basicstyle=\small\ttfamily,
-	language=C++,
-	numbers=left,
-	numberstyle=\small,
-	breaklines=true,
-	backgroundcolor=\color{gray!10},
-	keywordstyle=\color[rgb]{1,0,0},
-	commentstyle=\color[rgb]{0,0.5,0},
-	stringstyle=\color[rgb]{0,0,1},
-	tabsize=4
-}
+%% \lstdefinestyle{ocamlstyle}{
+%% 	basicstyle=\small\ttfamily,
+%% 	language=ocaml,
+%% 	numbers=left,
+%% 	numberstyle=\small,
+%% 	breaklines=true,
+%% 	backgroundcolor=\color{gray!10},
+%% 	keywordstyle=\color[rgb]{1,0,0},
+%% 	commentstyle=\color[rgb]{0,0.5,0},
+%% 	stringstyle=\color[rgb]{0,0,1},
+%% 	tabsize=4
+%% }
+
 \renewcommand{\lstlistingname}{Code}
 \captionsetup[lstlisting]{font={footnotesize},margin=1.5cm,singlelinecheck=false } % removes "Listing 1: "
 \definecolor{light-light-gray}{gray}{0.95}

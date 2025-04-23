@@ -4,12 +4,23 @@
 
 \olchapter{sge}{lsm}{Log Structured Merge}
 
+\begin{abstract}
 \end{abstract}
 \newpage
 
 	\section{ Construction of LSM Tree}
 	\section{ SkipLists}
 	\section{ Bloom Filters}
+
+			\begin{lstlisting}[style=ocamlstyle,caption={A example with parameter in a environment.}]
+  let get_state = function
+    | `Leader -> "leader."
+    | `Follower -> "follower."
+    | `Candidate -> "candidate."
+    | `Dead -> " dead."
+			\end{lstlisting}
+
+
 	\section{ MemTable}
 	\section{ Sorted String Table}
 	\section{ Summary }
