@@ -12,7 +12,6 @@
 	\section{ SkipLists}
 	\section{ Bloom Filters}
 
-    I have settled on
 	\subsection{ Development of a hash function }
 
     I have settled on \textit{Murmurhash} to test my bloom filter.
@@ -51,6 +50,7 @@ let murmurhash chunks len seed =
   let l = div len (of_int 4) in
   h := seed;
 
+ (* Printf.eprintf " %ld"  l; *)
 
  for i = 0 to (to_int l) - 1 do
   (* k := Bytes.get_int32_le chunks i; *)
@@ -98,6 +98,53 @@ if l >= 1 then begin
   h := logxor !h (shift_right_logical !h 16);
 
   !h
+	\end{lstlisting}
+
+	\subsection{ Some basic tests}
+
+ The observant reader may have noted that there are two primary
+ sections in the hash function shown above.
+
+
+\begin{itemize}
+\item { The first part of the code that handles 4-byte sequences}
+\item { The remaining part that handles sequences less than 4-bytes}
+\end{itemize}
+
+Both parts ar exercised in the test.
+
+
+			\begin{lstlisting}[style=ocamlstyle,caption={Tests.}]
+ let test str seed =
+  let len =  (Int32.of_int (String.length str)) in
+  murmurhash (String.to_bytes str) len seed
+
+  let%expect_test _=
+
+  let seed = 0 in
+  let hash = test "asdfqwerty" (Int32.of_int seed) in
+  let hex = Printf.sprintf "%lx" hash in
+  print_endline hex;
+  [%expect {| a3cfe04b |}];
+
+  let seed = 0 in
+  let hash = test "hey" (Int32.of_int seed) in
+  let hex = Printf.sprintf "%lx" hash in
+  print_endline hex;
+
+  [%expect {|
+    12f94418
+    |}];
+
+
+  let hash = test "dude" (Int32.of_int seed) in
+  let hex = Printf.sprintf "%lx" hash in
+  print_endline hex;
+  [%expect {| ef0487f3 |}];
+  let hash = test "Hello2" (Int32.of_int seed) in
+  let hex = Printf.sprintf "%lx" hash in
+  print_endline hex;
+  [%expect {| e5ce223e |}]
 	\end{lstlisting}
 
 	\section{ MemTable}
